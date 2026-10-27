@@ -30,7 +30,7 @@ let renderer;
 try {
 	renderer = new THREE.WebGLRenderer({
 		antialias: true,
-		alpha: false,
+		alpha: true,
 		powerPreference: 'high-performance',
 	});
 } catch (err) {
@@ -45,12 +45,13 @@ if (!renderer.getContext()) {
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.NoToneMapping;
-renderer.setClearColor(0x000000, 1);
+// Transparent canvas so the host page's background shows through.
+renderer.setClearColor(0x000000, 0);
 renderer.info.autoReset = false;
 stage.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x06090c);
+scene.background = null;
 const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 500);
 const lookTarget = new THREE.Vector3();
 const viewOffset = new THREE.Vector3(2.4, 0.6, 14);

@@ -15,7 +15,10 @@ const COMPOSITE_FRAG = `
 uniform sampler2D tBloom;
 varying vec2 vUv;
 void main() {
-	gl_FragColor = vec4(texture2D(tBloom, vUv).rgb, 1.0);
+	// Glow carries its own coverage so it stays visible on a transparent canvas
+	// instead of turning the whole frame opaque.
+	vec3 glow = texture2D(tBloom, vUv).rgb;
+	gl_FragColor = vec4(glow, clamp(max(glow.r, max(glow.g, glow.b)), 0.0, 1.0));
 	#include <colorspace_fragment>
 }
 `;
@@ -61,6 +64,9 @@ export function createBloom(renderer) {
 		blendSrc: THREE.OneFactor,
 		blendDst: THREE.OneFactor,
 		blendEquation: THREE.AddEquation,
+		blendSrcAlpha: THREE.OneFactor,
+		blendDstAlpha: THREE.OneFactor,
+		blendEquationAlpha: THREE.AddEquation,
 		transparent: true,
 	});
 	const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), compositeMaterial);

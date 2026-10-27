@@ -3,25 +3,23 @@
 	box-sizing: border-box;
 }
 
-/* Sized as a block so it can sit inside a host page (e.g. a Webflow embed).
-   Override --circuit-height to change it. */
+/* Fills whatever element it is placed in, so size that wrapper (e.g. the
+   Webflow Div/Section around the Code Embed). --circuit-min-height is the
+   fallback when the wrapper has no height of its own. */
+.w-embed:has(> .circuit-board) {
+	width: 100%;
+	height: 100%;
+}
+
 .circuit-board {
 	position: relative;
 	width: 100%;
-	height: var(--circuit-height, 100vh);
+	height: 100%;
+	min-height: var(--circuit-min-height, 480px);
 	overflow: hidden;
-	background: #070c14;
+	background: transparent;
 	color: #c3d0dc;
 	font: 11px ui-monospace, SFMono-Regular, Consolas, monospace;
-}
-
-.circuit-board::after {
-	content: '';
-	position: absolute;
-	inset: 0;
-	pointer-events: none;
-	opacity: 0.025;
-	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23ffffff' filter='url(%23n)' opacity='.4' d='M0 0h180v180H0z'/%3E%3C/svg%3E");
 }
 
 .circuit-board header,
