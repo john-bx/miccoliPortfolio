@@ -1,7 +1,5 @@
 import * as THREE from 'three';
 import gsap from 'gsap';
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
-import Stats from 'three/addons/libs/stats.module.js';
 import { createBoard } from './js/board.js';
 import { createNxpBoard } from './js/board-nxp.js';
 import { createVersalBoard } from './js/board-versal.js';
@@ -23,6 +21,7 @@ const FOV = 45;
 const FRAME_PADDING = 1.22;
 const FRAME_PAN_Y = 1.2;
 
+const shell = document.querySelector('.circuit-board');
 const stage = document.querySelector('#stage');
 const errorEl = document.querySelector('#error');
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -161,7 +160,6 @@ let last = 0;
 let viewW = 0;
 let viewH = 0;
 let viewRatio = 0;
-const frameStats = { triangles: 0, lines: 0, calls: 0 };
 
 board.rotation.set(HOME_PITCH, 0, HOME_ROLL);
 
@@ -598,8 +596,7 @@ function resetView() {
 document.querySelector('#reset').addEventListener('click', resetView);
 
 function resolvePixelRatio() {
-	if (perf.pixelRatio === 'Device') return Math.min(window.devicePixelRatio || 1, 2);
-	return Number(perf.pixelRatio);
+	return Math.min(window.devicePixelRatio || 1, 2);
 }
 
 const _bounds = new THREE.Box3();
@@ -652,13 +649,16 @@ function resize() {
 	bloom.resize(renderer.domElement.width, renderer.domElement.height);
 }
 
-window.addEventListener('pointermove', (event) => {
+// Pointer coords are relative to the stage so tilt and hover picking work when
+// the scene is embedded in a page rather than filling the window.
+stage.addEventListener('pointermove', (event) => {
+	const rect = stage.getBoundingClientRect();
 	pointerInside = true;
-	pointerX = (event.clientX / window.innerWidth) * 2 - 1;
-	pointerY = (event.clientY / window.innerHeight) * 2 - 1;
+	pointerX = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+	pointerY = ((event.clientY - rect.top) / rect.height) * 2 - 1;
 });
 
-document.documentElement.addEventListener('pointerleave', () => {
+stage.addEventListener('pointerleave', () => {
 	pointerInside = false;
 	pointerX = 0;
 	pointerY = 0;
@@ -666,19 +666,22 @@ document.documentElement.addEventListener('pointerleave', () => {
 	stage.style.cursor = '';
 });
 
+// Only zoom on ctrl/cmd + wheel (also what trackpad pinch sends) so a plain
+// scroll still scrolls the host page past the scene.
 stage.addEventListener('wheel', (event) => {
+	if (!event.ctrlKey && !event.metaKey) return;
 	event.preventDefault();
 	targetZoom = THREE.MathUtils.clamp(targetZoom - event.deltaY * 0.0005, 0.75, 1.6);
 }, { passive: false });
 
-const chrome = document.querySelectorAll('header, nav, footer, .layers');
+const chrome = shell.querySelectorAll('header, nav, footer, .layers');
 
 function setChrome(on) {
 	shell.classList.toggle('show-ui', on);
 	for (const el of chrome) el.setAttribute('aria-hidden', on ? 'false' : 'true');
 }
 
-window.addEventListener('keydown', (event) => {
+shell.addEventListener('keydown', (event) => {
 	if (event.code === 'KeyD' && (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey) {
 		event.preventDefault();
 		setChrome(!shell.classList.contains('show-ui'));
@@ -688,67 +691,7 @@ window.addEventListener('keydown', (event) => {
 	if (event.key.toLowerCase() === 'r') resetView();
 });
 
-const perf = {
-	fps: '—',
-	triangles: '—',
-	lines: '—',
-	drawCalls: '—',
-	pixelRatio: 'Device',
-};
-
-const shell = document.querySelector('.circuit-board');
 setChrome(false);
-const gui = new GUI({ title: 'Performance', autoPlace: false });
-gui.domElement.classList.add('perf-gui');
-shell.appendChild(gui.domElement);
-const fpsCtrl = gui.add(perf, 'fps').name('FPS').disable();
-const triCtrl = gui.add(perf, 'triangles').name('Triangles').disable();
-const lineCtrl = gui.add(perf, 'lines').name('Lines').disable();
-const callCtrl = gui.add(perf, 'drawCalls').name('Draw calls').disable();
-gui.add(perf, 'pixelRatio', ['Device', '1', '1.5', '2']).name('Pixel ratio').onChange(() => {
-	viewRatio = -1;
-	resize();
-});
-gui.add(bloom, 'strength', 0, 3, 0.01).name('Bloom');
-gui.add(bloom, 'radius', 0, 1, 0.01).name('Bloom radius');
-gui.add(bloom, 'threshold', 0, 1, 0.01).name('Bloom threshold');
-gui.open();
-
-const statsRow = document.createElement('div');
-statsRow.className = 'perf-stats';
-shell.appendChild(statsRow);
-const statsPanels = [0, 1, 2].map((panel) => {
-	const stats = new Stats();
-	stats.showPanel(panel);
-	stats.dom.style.position = 'relative';
-	stats.dom.style.top = '0';
-	stats.dom.style.left = '0';
-	statsRow.appendChild(stats.dom);
-	return stats;
-});
-
-let fpsFrames = 0;
-let fpsWindow = 0;
-
-function formatInt(value) {
-	return Math.round(value).toLocaleString('en-US');
-}
-
-function notePerf(dt) {
-	fpsFrames += 1;
-	fpsWindow += dt;
-	if (fpsWindow < 0.4) return;
-	perf.fps = (fpsFrames / fpsWindow).toFixed(1);
-	perf.triangles = formatInt(frameStats.triangles);
-	perf.lines = formatInt(frameStats.lines);
-	perf.drawCalls = formatInt(frameStats.calls);
-	fpsCtrl.updateDisplay();
-	triCtrl.updateDisplay();
-	lineCtrl.updateDisplay();
-	callCtrl.updateDisplay();
-	fpsFrames = 0;
-	fpsWindow = 0;
-}
 
 const depthMaterial = new THREE.MeshBasicMaterial({
 	colorWrite: false,
@@ -772,9 +715,6 @@ function renderFrame() {
 	renderer.autoClear = false;
 	renderer.render(scene, camera);
 
-	frameStats.triangles = renderer.info.render.triangles;
-	frameStats.lines = renderer.info.render.lines;
-
 	if (bloom.strength > 0) {
 		bloom.capture(() => {
 			const hidden = [];
@@ -797,13 +737,11 @@ function renderFrame() {
 		bloom.composite();
 	}
 
-	frameStats.calls = renderer.info.render.calls;
 	camera.layers.set(0);
 	scene.background = background;
 }
 
 function tick(now) {
-	for (const stats of statsPanels) stats.begin();
 	const raw = last ? Math.min((now - last) / 1000, 0.1) : 0;
 	const dt = Math.min(raw, 0.05);
 	last = now;
@@ -849,8 +787,6 @@ function tick(now) {
 	}
 
 	renderFrame();
-	notePerf(raw || dt);
-	for (const stats of statsPanels) stats.end();
 }
 
 resize();

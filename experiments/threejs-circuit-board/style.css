@@ -3,17 +3,12 @@
 	box-sizing: border-box;
 }
 
-html,
-body {
-	margin: 0;
-	width: 100%;
-	height: 100%;
-	background: #070c14;
-}
-
+/* Sized as a block so it can sit inside a host page (e.g. a Webflow embed).
+   Override --circuit-height to change it. */
 .circuit-board {
-	position: fixed;
-	inset: 0;
+	position: relative;
+	width: 100%;
+	height: var(--circuit-height, 100vh);
 	overflow: hidden;
 	background: #070c14;
 	color: #c3d0dc;
@@ -31,7 +26,7 @@ body {
 
 .circuit-board header,
 .circuit-board footer {
-	position: fixed;
+	position: absolute;
 	left: 88px;
 	right: 88px;
 	display: flex;
@@ -43,9 +38,7 @@ body {
 .circuit-board:not(.show-ui) header,
 .circuit-board:not(.show-ui) footer,
 .circuit-board:not(.show-ui) nav,
-.circuit-board:not(.show-ui) .layers,
-.circuit-board:not(.show-ui) .perf-gui,
-.circuit-board:not(.show-ui) .perf-stats {
+.circuit-board:not(.show-ui) .layers {
 	opacity: 0 !important;
 	visibility: hidden !important;
 	pointer-events: none !important;
@@ -55,32 +48,14 @@ body {
 	top: 26px;
 }
 
-.circuit-board .perf-gui {
-	position: fixed;
-	top: 84px;
-	right: 16px;
-	z-index: 40;
-	max-height: calc(100vh - 168px);
-	overflow: auto;
-}
-
-.circuit-board .perf-stats {
-	position: fixed;
-	top: 84px;
-	left: 18px;
-	z-index: 40;
-	display: flex;
-	gap: 2px;
-}
-
-.brand {
+.circuit-board .brand {
 	display: flex;
 	align-items: center;
 	gap: 12px;
 	letter-spacing: 0.14em;
 }
 
-.brand i,
+.circuit-board .brand i,
 .circuit-board footer b {
 	display: inline-block;
 	width: 6px;
@@ -90,18 +65,18 @@ body {
 	box-shadow: 0 0 10px #1fc28340;
 }
 
-.brand span {
+.circuit-board .brand span {
 	color: #526172;
 	margin-left: 20px;
 	font-size: 9px;
 }
 
-.tools {
+.circuit-board .tools {
 	display: flex;
 	gap: 8px;
 }
 
-.tools button,
+.circuit-board .tools button,
 .circuit-board nav button {
 	color: #b9c9d7;
 	background: #0b121b;
@@ -113,34 +88,34 @@ body {
 	white-space: nowrap;
 }
 
-.tools button:hover,
+.circuit-board .tools button:hover,
 .circuit-board nav button:hover {
 	border-color: #1fc283;
 	color: #e0fff2;
 }
 
-.tools button[aria-pressed='true'],
+.circuit-board .tools button[aria-pressed='true'],
 .circuit-board nav button[aria-pressed='true'] {
 	border-color: #49a9ed;
 	color: #d1f0ff;
 	background: #102438;
 }
 
-.tools button:focus-visible,
+.circuit-board .tools button:focus-visible,
 .circuit-board nav button:focus-visible,
-#stage:focus-visible {
+.circuit-board #stage:focus-visible {
 	outline: 1px solid #1fc283;
 	outline-offset: -4px;
 }
 
-#stage {
+.circuit-board #stage {
 	position: absolute;
 	inset: 0;
 	touch-action: none;
 	cursor: default;
 }
 
-#stage canvas {
+.circuit-board #stage canvas {
 	display: block;
 	width: 100%;
 	height: 100%;
@@ -172,7 +147,7 @@ body {
 	color: #3b4c5c;
 }
 
-#error {
+.circuit-board #error {
 	position: absolute;
 	top: 45%;
 	left: 20%;
@@ -182,7 +157,7 @@ body {
 }
 
 .circuit-board nav {
-	position: fixed;
+	position: absolute;
 	bottom: 68px;
 	left: 50%;
 	transform: translateX(-50%);
@@ -201,8 +176,8 @@ body {
 	white-space: nowrap;
 }
 
-.layers {
-	position: fixed;
+.circuit-board .layers {
+	position: absolute;
 	left: 32px;
 	top: 28%;
 	display: flex;
@@ -215,21 +190,21 @@ body {
 	z-index: 2;
 }
 
-.layers b {
+.circuit-board .layers b {
 	display: block;
 	color: #91b3c8;
 	font-weight: 400;
 	margin: 8px 0;
 }
 
-.layers small {
+.circuit-board .layers small {
 	font-size: 10px;
 	letter-spacing: 0;
 	color: #506775;
 }
 
 @media (max-width: 1000px) {
-	.layers {
+	.circuit-board .layers {
 		display: none;
 	}
 }
@@ -241,11 +216,11 @@ body {
 		top: 14px;
 	}
 
-	.tools {
+	.circuit-board .tools {
 		gap: 6px;
 	}
 
-	.tools button {
+	.circuit-board .tools button {
 		padding: 8px 9px;
 		font-size: 10px;
 	}
@@ -256,8 +231,8 @@ body {
 		justify-content: center;
 	}
 
-	.brand span,
-	.edition,
+	.circuit-board .brand span,
+	.circuit-board .edition,
 	.circuit-board footer span:first-child {
 		display: none;
 	}
@@ -266,7 +241,7 @@ body {
 		font-size: 10px;
 	}
 
-	.brand {
+	.circuit-board .brand {
 		font-size: 10px;
 	}
 }
